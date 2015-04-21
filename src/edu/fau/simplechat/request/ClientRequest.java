@@ -4,18 +4,15 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
-import org.json.simple.JSONObject;
-
 /**
  * Abstract class containing basic information for sending request
  * to server.
  * @author kyle
- *
  */
 public abstract class ClientRequest implements Serializable  {
-	
+
 	/**
-	 * 
+	 * Serializable ID
 	 */
 	private static final long serialVersionUID = 4992736202526285106L;
 
@@ -23,23 +20,23 @@ public abstract class ClientRequest implements Serializable  {
 	 * ID for the request sent by the user
 	 */
 	private final UUID requestId;
-	
+
 	/**
 	 * ID for the user that sent the request
 	 */
 	private final UUID userId;
-	
+
 	/**
 	 * Time the request was sent at.
 	 */
 	private final Date sentTime;
-	
+
 	public ClientRequest(final UUID userId)
 	{
 		this.userId = userId;
 		requestId = UUID.randomUUID();
 		sentTime = new Date();
-		
+
 	}
 
 	/**

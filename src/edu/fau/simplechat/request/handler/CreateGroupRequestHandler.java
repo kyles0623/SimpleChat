@@ -7,6 +7,11 @@ import edu.fau.simplechat.server.ChatGroup;
 import edu.fau.simplechat.server.ChatManager;
 import edu.fau.simplechat.server.UserConnection;
 
+/**
+ * Handler to create the group being requested.
+ * @author kyle
+ *
+ */
 public class CreateGroupRequestHandler extends RequestHandler{
 
 	public CreateGroupRequestHandler(final ClientRequest c, final UserConnection user,
@@ -21,7 +26,7 @@ public class CreateGroupRequestHandler extends RequestHandler{
 		ChatGroup group = chatManager.createGroup(request.getGroupName());
 
 		/**
-		 * Group exists
+		 * Group already exists
 		 */
 		if(group == null)
 		{

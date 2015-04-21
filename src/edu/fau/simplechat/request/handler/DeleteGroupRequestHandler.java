@@ -6,6 +6,11 @@ import edu.fau.simplechat.request.DeleteGroupRequest;
 import edu.fau.simplechat.server.ChatManager;
 import edu.fau.simplechat.server.UserConnection;
 
+/**
+ * Handler to delete the group being requested.
+ * @author kyle
+ *
+ */
 public class DeleteGroupRequestHandler extends RequestHandler {
 
 	public DeleteGroupRequestHandler(final ClientRequest c, final UserConnection user,

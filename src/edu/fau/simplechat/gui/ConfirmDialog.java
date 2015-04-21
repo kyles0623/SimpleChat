@@ -24,14 +24,27 @@ import javafx.stage.StageStyle;
  */
 public class ConfirmDialog extends Stage {
 
-	private final int WIDTH_DEFAULT = 300;
 
-	public static final int ICON_INFO = 0;
-	public static final int ICON_ERROR = 1;
+	/**
+	 * Default width of confirm dialog ox
+	 */
+	private final double WIDTH_DEFAULT = 300 ;
 
+	/**
+	 * Confirm Button
+	 */
 	private final Button confirm = new Button("Confirm");
+
+	/**
+	 * Cancel button
+	 */
 	private final Button cancel = new Button("Cancel");
 
+	/**
+	 * Initialize Confirm Dialog with owner and message
+	 * @param owner Owner of dialog box
+	 * @param msg Message to be displayed
+	 */
 	public ConfirmDialog(final Stage owner, final String msg) {
 		setResizable(false);
 		initModality(Modality.APPLICATION_MODAL);
@@ -55,13 +68,13 @@ public class ConfirmDialog extends Stage {
 		final Text text = new Text(msg);
 		text.snapshot(null, null);
 		// + 20 because there is padding 10 left and right
-		int width = (int) text.getLayoutBounds().getWidth() + 40;
+		double width = text.getLayoutBounds().getWidth() + 40;
 
 		if (width < WIDTH_DEFAULT) {
 			width = WIDTH_DEFAULT;
 		}
 
-		int height = 200;
+		double height = 200;
 
 		final Scene scene = new Scene(borderPane, width, height);
 		scene.setFill(Color.TRANSPARENT);
@@ -73,11 +86,23 @@ public class ConfirmDialog extends Stage {
 	}
 
 
+	/**
+	 * Set what happens when the user clicks confirm
+	 * @param eventHandler EventHandler to handle confirmation event
+	 * @precondition eventHandler is not null
+	 * @postcondition eventHandler will execute when Confirm button is clicked
+	 */
 	public void setOnConfirmHandler(final EventHandler<ActionEvent> eventHandler)
 	{
 		confirm.setOnAction(eventHandler);
 	}
 
+	/**
+	 * Set what happens when the user clicks cancel
+	 * @param eventHandler EventHandler to handle cancellation event
+	 * @precondition eventHandler is not null
+	 * @postcondition eventHandler will execute when Cancel button is clicked
+	 */
 	public void setOnCancelHandler(final EventHandler<ActionEvent> eventHandler)
 	{
 		cancel.setOnAction(eventHandler);

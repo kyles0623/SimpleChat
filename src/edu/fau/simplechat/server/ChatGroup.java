@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.UUID;
 
+import edu.fau.simplechat.logger.Logger;
 import edu.fau.simplechat.model.GroupModel;
 import edu.fau.simplechat.model.UserModel;
 import edu.fau.simplechat.response.ServerResponse;
@@ -117,9 +118,20 @@ public class ChatGroup {
 	 * @precondition: User is already part of this group.
 	 * @postcondition: User will no longer be a member of this group.
 	 */
-	public boolean removeUser(final UserConnection user)
+	public synchronized boolean removeUser(final UserConnection user)
 	{
-		return users.remove(user);
+		Logger.getInstance().write("Attempting to Removing user : "+user.getUserModel().getUsername()+" from chat group.");
+
+		if(users.remove(user))
+		{
+			Logger.getInstance().write("successfully removed user");
+			return true;
+		}
+		else
+		{
+			Logger.getInstance().write("Failed to remove user");
+			return false;
+		}
 	}
 
 	/**

@@ -3,17 +3,17 @@ package edu.fau.simplechat.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import edu.fau.simplechat.logger.Logger;
-import edu.fau.simplechat.model.GroupModel;
 
 /**
- * TODO: Description of ChatServer
+ * Chat Server is the main connection all users
+ * will be connecting to. Chat Server will receive
+ * connections to users and will give them their
+ * own thread to receive requests from.
  * @author kyle
  *
  */
@@ -23,29 +23,28 @@ public class ChatServer {
 	 * port number for server to run on
 	 */
 	private int port;
-	
+
 	/**
 	 * atomic boolean indicating that server is running.
 	 */
 	private final AtomicBoolean running;
-	
+
 	/**
 	 * ServerSocket that connects clients to this server.
 	 */
 	private ServerSocket serverSocket;
-	
+
 	/**
 	 * Manages all of the user connections and groups. All UserConnections and ChatGroups should be created through here.
 	 */
-	private ChatManager chatManager;
-	
-	private ExecutorService clientThreadPool;
-	
+	private final ChatManager chatManager;
+
+	private final ExecutorService clientThreadPool;
+
 	private final static ChatServer instance = new ChatServer();
-	
+
 	/**
-	 * TODO :Initialize the chat server with the given port number. 
-	 * @param port Port number  to connect through
+	 * Initialize the chat server with the given port number.
 	 */
 	private ChatServer()
 	{
@@ -53,30 +52,35 @@ public class ChatServer {
 		chatManager = new ChatManager();
 		clientThreadPool = Executors.newCachedThreadPool();
 	}
-	
+
+	/**
+	 * Retrieve single instance of ChatServer
+	 * @return ChatServer instance
+	 * @precondition none
+	 * @postcondition none
+	 */
 	public static ChatServer getInstance()
 	{
 		return instance;
 	}
-	
+
 	/**
 	 * Initializes port number for ChatServer
-	 * @param port
-	 * @precondition
-	 * @postcondition
+	 * @param port Port to initialize to
+	 * @precondition none
+	 * @postcondition Server will be receiving connections through port
 	 */
-	public void setup(int port)
+	public void setup(final int port)
 	{
 		this.port = port;
 	}
-	
+
 	/**
 	 * Start to retrieve incoming sockets connecting to the server.
-	 * @throws IOException
-	 * @precondition setup method has been called.
-	 * @postcondition TODO
+	 * @precondition setup method has been called with a port number.
+	 * @postcondition Chat Server will receive connections to users
 	 */
-	public synchronized void run() 
+	public synchronized void run()
 	{
 		try{
 			//Initialize ServerSocket
@@ -99,51 +103,20 @@ public class ChatServer {
 			catch(IOException e)
 			{
 				System.out.println("Error in connection while waiting for socket: "+e);
+				running.set(false);
 				clientThreadPool.shutdown();
 			}
 		}
-		
+
 		clientThreadPool.shutdown();
 		Logger.getInstance().close();
 	}
-	
-	public synchronized void testingThread()
-	{
-		Thread thread  = new Thread(new Runnable(){
 
-			@Override
-			public void run() {
-				
-				while(true){
-					Scanner scan = new Scanner(System.in);
-					
-					String line = scan.nextLine();
-					
-					if(line.contains("USERS")){
-						List<GroupModel> groups = chatManager.getGroups();
-						
-						for(GroupModel group: groups)
-						{
-							ChatGroup chatGroup = chatManager.getGroupById(group.getId());
-							
-							System.out.print(chatGroup.toString());
-						}
-						
-					}
-				
-				}
-				
-			}
-			
-			
-		});
-		
-		thread.start();
-		
-	}
-	
 	/**
 	 * Stop the server from running.
+	 * 
+	 * @precondition
+	 * @postcondition
 	 */
 	public synchronized void stop()
 	{

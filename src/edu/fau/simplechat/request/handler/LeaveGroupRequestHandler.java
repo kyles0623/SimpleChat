@@ -11,11 +11,16 @@ import edu.fau.simplechat.server.ChatGroup;
 import edu.fau.simplechat.server.ChatManager;
 import edu.fau.simplechat.server.UserConnection;
 
+/**
+ * Handler to have a user leave a group.
+ * @author kyle
+ *
+ */
 public class LeaveGroupRequestHandler extends RequestHandler {
 
-	
-	public LeaveGroupRequestHandler(ClientRequest c, UserConnection user,
-			ChatManager cM) {
+
+	public LeaveGroupRequestHandler(final ClientRequest c, final UserConnection user,
+			final ChatManager cM) {
 		super(c, user, cM);
 		// TODO Auto-generated constructor stub
 	}
@@ -25,12 +30,12 @@ public class LeaveGroupRequestHandler extends RequestHandler {
 		LeaveGroupRequest joinGroupRequest = (LeaveGroupRequest)clientRequest;
 
 		UUID groupId = joinGroupRequest.getGroupId();
-		
+
 		if(chatManager.removeUserFromGroup(userConnection, groupId))
 		{
-			 
+
 			ChatGroup group = chatManager.getGroupById(groupId);
-			
+
 			LeaveGroupResponse response = new LeaveGroupResponse(joinGroupRequest.getRequestId(),
 					group.getGroupModel(),
 					JoinGroupResponse.RESPONSE_SUCCESS);
@@ -40,10 +45,10 @@ public class LeaveGroupRequestHandler extends RequestHandler {
 		{
 			Logger.getInstance().write("Failure to remove user to group.");
 		}
-		
-		
-		
+
+
+
 	}
-	
+
 
 }

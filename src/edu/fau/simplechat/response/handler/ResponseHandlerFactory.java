@@ -1,9 +1,10 @@
 package edu.fau.simplechat.response.handler;
 
 import edu.fau.simplechat.client.ServerConnection;
-import edu.fau.simplechat.gui.IRequestListener;
+import edu.fau.simplechat.gui.IResponseListener;
 import edu.fau.simplechat.request.ClientRequest;
 import edu.fau.simplechat.response.CreateGroupServerResponse;
+import edu.fau.simplechat.response.FileMessageResponse;
 import edu.fau.simplechat.response.GroupDeletedResponse;
 import edu.fau.simplechat.response.GroupListResponse;
 import edu.fau.simplechat.response.JoinGroupResponse;
@@ -32,7 +33,7 @@ public class ResponseHandlerFactory {
 	}
 
 	public ResponseHandler createResponseHandler(final ServerConnection u,final ServerResponse response, final ClientRequest request,
-			final IRequestListener listener)
+			final IResponseListener listener)
 	{
 		if(response instanceof LoginServerResponse)
 		{
@@ -73,6 +74,10 @@ public class ResponseHandlerFactory {
 		else if(response instanceof GroupDeletedResponse)
 		{
 			return new GroupDeletedResponseHandler(u,response,request,listener);
+		}
+		else if(response instanceof FileMessageResponse)
+		{
+			return new FileMessageResponseHandler(u,response,request,listener);
 		}
 		else
 		{

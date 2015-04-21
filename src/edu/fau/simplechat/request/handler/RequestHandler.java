@@ -5,35 +5,49 @@ import edu.fau.simplechat.server.ChatManager;
 import edu.fau.simplechat.server.UserConnection;
 
 /**
- * Abstract class for handler of requests sent by user.
+ * Abstract class for handler of requests
+ * sent by user. Each type of request
+ * should have a request handler class
+ * associated with it.
  * @author kyle
- *
  */
 public abstract class RequestHandler {
-	
+
 	/**
 	 * Request to be handled
 	 */
 	protected ClientRequest clientRequest;
-	
+
 	/**
 	 * ChatManager instance
 	 */
 	protected ChatManager chatManager;
-	
+
 	/**
 	 * User Connection to user who received request
 	 */
 	protected UserConnection userConnection;
-	
-	public RequestHandler(ClientRequest c, UserConnection user, ChatManager cM)
+
+	/**
+	 * Initialize the RequestHandler with the required
+	 * objects to handle the request.
+	 * @param clientRequest Request initially sent by user
+	 * @param userConnection UserConnection connected to client side
+	 * @param chatManager Manager managing the user connections and chat groups
+	 */
+	public RequestHandler(final ClientRequest clientRequest, final UserConnection userConnection, final ChatManager chatManager)
 	{
-		this.clientRequest = c;
-		this.userConnection = user;
-		this.chatManager = cM;
-		
+		this.clientRequest = clientRequest;
+		this.userConnection = userConnection;
+		this.chatManager = chatManager;
+
 	}
-	
+
+	/**
+	 * Call to handle the request.
+	 * @precondition none
+	 * @postcondition The request will be handled
+	 */
 	public abstract void handle();
-	
+
 }

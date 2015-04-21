@@ -1,13 +1,18 @@
 package edu.fau.simplechat.controller;
 
 
+import java.io.File;
+
 import edu.fau.simplechat.client.ServerConnection;
-import edu.fau.simplechat.gui.IRequestListener;
+import edu.fau.simplechat.gui.IResponseListener;
 import edu.fau.simplechat.logger.Logger;
+import edu.fau.simplechat.model.FileMessageModel;
 import edu.fau.simplechat.model.GroupModel;
 import edu.fau.simplechat.model.UserModel;
+import edu.fau.simplechat.request.ClientRequest;
 import edu.fau.simplechat.request.CreateGroupRequest;
 import edu.fau.simplechat.request.DeleteGroupRequest;
+import edu.fau.simplechat.request.FileMessageRequest;
 import edu.fau.simplechat.request.GroupListRequest;
 import edu.fau.simplechat.request.JoinGroupRequest;
 import edu.fau.simplechat.request.LeaveGroupRequest;
@@ -28,7 +33,7 @@ public class ChatController {
 	/**
 	 * Listener defining what to do when specific request are received.
 	 */
-	private final IRequestListener requestListener;
+	private final IResponseListener requestListener;
 
 	/**
 	 * Initialize Chat Controller with Request Listener
@@ -36,7 +41,7 @@ public class ChatController {
 	 * @precondition RequestListener is not null
 	 * @postcondition chat controller will be initialized
 	 */
-	public ChatController(final IRequestListener requestListener)
+	public ChatController(final IResponseListener requestListener)
 	{
 		this.requestListener = requestListener;
 	}
@@ -65,7 +70,7 @@ public class ChatController {
 	public void connect(final String host, final int port)
 	{
 		connection = new ServerConnection(host,port);
-		connection.setRequestListener(requestListener);
+		connection.setResponseListener(requestListener);
 		connection.connect();
 		connection.start();
 	}
@@ -102,9 +107,34 @@ public class ChatController {
 	 */
 	public void sendMessage(final String message, final GroupModel group) {
 
-		MessageRequest request = new MessageRequest(connection.getUser().getId(),group.getId(),message);
+		ClientRequest request;
+
+		request = new MessageRequest(connection.getUser().getId(),group.getId(),message);
 		connection.sendRequest(request);
 	}
+
+	/**
+	 * Send a file to a group.
+	 * @param file File to send
+	 * @param group Group to send to
+	 * @precondition file is smaller than 2MB
+	 * @postcondition Users in group will receive file
+	 */
+	public void sendFile(final File file, final GroupModel group)
+	{
+
+		FileMessageModel fileMessage = new FileMessageModel(group,getCurrentUser(),file);
+
+		//Error occured reading file
+		if(fileMessage.getNumberOfBytes() == -1)
+		{
+			Logger.getInstance().write("Error sending file");
+		}
+
+		ClientRequest request = new FileMessageRequest(connection.getUser().getId(),fileMessage);
+		connection.sendRequest(request);
+	}
+
 
 	/**
 	 * Join a group to communicate with

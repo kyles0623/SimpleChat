@@ -3,7 +3,7 @@ package edu.fau.simplechat.response.handler;
 import java.util.List;
 
 import edu.fau.simplechat.client.ServerConnection;
-import edu.fau.simplechat.gui.IRequestListener;
+import edu.fau.simplechat.gui.IResponseListener;
 import edu.fau.simplechat.model.GroupModel;
 import edu.fau.simplechat.request.ClientRequest;
 import edu.fau.simplechat.response.GroupListResponse;
@@ -13,7 +13,7 @@ import edu.fau.simplechat.response.ServerResponse;
 public class GroupListResponseHandler extends ResponseHandler {
 
 	public GroupListResponseHandler(ServerConnection user, ServerResponse r,
-			ClientRequest c, IRequestListener listener) {
+			ClientRequest c, IResponseListener listener) {
 		super(user, r, c, listener);
 		// TODO Auto-generated constructor stub
 	}

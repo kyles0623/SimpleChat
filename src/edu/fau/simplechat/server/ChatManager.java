@@ -46,7 +46,7 @@ public class ChatManager {
 	private final HashMap<UUID,UserConnection> userById;
 
 	/**
-	 * Initialize ChatManager
+	 * Initialize ChatManager and create default groups.
 	 */
 	public ChatManager()
 	{
@@ -89,6 +89,7 @@ public class ChatManager {
 
 	/**
 	 * Broadcast a message to all users in chat system.
+	 * Used for global things such as creation and deletion of groups.
 	 * @param response ServerResponse to broadcast to users
 	 * @precondition response is not null
 	 * @postcondition all users will receive response
@@ -190,6 +191,7 @@ public class ChatManager {
 
 		if(groupById.get(groupId).addUser(user))
 		{
+			user.addGroup(groupById.get(groupId));
 			group.broadcast(new UserJoinedGroupResponse(group.getGroupModel(),user.getUserModel()));
 			return true;
 		}

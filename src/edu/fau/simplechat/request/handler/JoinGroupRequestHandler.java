@@ -10,11 +10,16 @@ import edu.fau.simplechat.server.ChatGroup;
 import edu.fau.simplechat.server.ChatManager;
 import edu.fau.simplechat.server.UserConnection;
 
+/**
+ * Handler to add a user to a specific group.
+ * @author kyle
+ *
+ */
 public class JoinGroupRequestHandler extends RequestHandler {
 
-	
-	public JoinGroupRequestHandler(ClientRequest c, UserConnection user,
-			ChatManager cM) {
+
+	public JoinGroupRequestHandler(final ClientRequest c, final UserConnection user,
+			final ChatManager cM) {
 		super(c, user, cM);
 		// TODO Auto-generated constructor stub
 	}
@@ -24,12 +29,12 @@ public class JoinGroupRequestHandler extends RequestHandler {
 		JoinGroupRequest joinGroupRequest = (JoinGroupRequest)clientRequest;
 
 		UUID groupId = joinGroupRequest.getGroupId();
-		
+
 		if(chatManager.addUserToGroup(userConnection, groupId))
 		{
-			 
+
 			ChatGroup group = chatManager.getGroupById(groupId);
-			
+
 			/**
 			 * TODO: Send message to members of group that user joined.
 			 */
@@ -42,10 +47,10 @@ public class JoinGroupRequestHandler extends RequestHandler {
 		{
 			Logger.getInstance().write("Failure to add user to group.");
 		}
-		
-		
-		
+
+
+
 	}
-	
+
 
 }

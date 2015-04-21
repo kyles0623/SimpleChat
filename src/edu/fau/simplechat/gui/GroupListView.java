@@ -9,12 +9,24 @@ import javafx.scene.control.ListView;
 import javafx.util.Callback;
 import edu.fau.simplechat.model.GroupModel;
 
+/**
+ * GroupListView is a container used to display
+ * all groups associated with chat system
+ * @author kyle
+ *
+ */
 public class GroupListView extends ListView<GroupModel>
 {
 
-
+	/**
+	 * List of groups to display
+	 */
 	List<GroupModel> groups;
 
+	/**
+	 * Initialize with initial group list
+	 * @param groups Initial Group List
+	 */
 	public GroupListView(final List<GroupModel> groups)
 	{
 		super();
@@ -31,6 +43,12 @@ public class GroupListView extends ListView<GroupModel>
 				);
 	}
 
+	/**
+	 * Add a new group
+	 * @param group Group to add
+	 * @precondition group is not null
+	 * @postcondition Group List will display new group
+	 */
 	public void addItem(final GroupModel group)
 	{
 		groups.add(group);
@@ -38,12 +56,23 @@ public class GroupListView extends ListView<GroupModel>
 
 	}
 
+	/**
+	 * Remove a group
+	 * @param group GRoup to remove
+	 * @precondition group is in list
+	 * @postcondition Group list will no longer display group
+	 */
 	public void removeItem(final GroupModel group)
 	{
 		groups.remove(group);
 		this.getItems().remove(group);
 	}
 
+	/**
+	 * ListCell used to display a group appropriated
+	 * @author kyle
+	 *
+	 */
 	private class GroupChatCell extends ListCell<GroupModel>
 	{
 		@Override

@@ -1,5 +1,9 @@
 package edu.fau.simplechat.gui;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -19,6 +23,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -33,21 +39,49 @@ import edu.fau.simplechat.logger.Logger;
 import edu.fau.simplechat.model.GroupModel;
 import edu.fau.simplechat.model.MessageModel;
 import edu.fau.simplechat.model.UserModel;
+import edu.fau.simplechat.response.FileMessageResponse;
 
+/**
+ * This is the entry point to the application.
+ * this is the main setup for the GUI and
+ * @author kyle
+ *
+ */
 public class MainApplication extends Application{
 
+	/**
+	 * Primary Stage for application
+	 */
 	private Stage primaryStage;
 
+	/**
+	 * Chat Controller for handling communication with server
+	 */
 	private ChatController controller;
 
+	/**
+	 * Set of Active groups in chat system
+	 */
 	private HashSet<GroupModel> groupsActive;
 
+	/**
+	 * Tab Pane holding all Chat Tabs
+	 */
 	private TabPane tabPane;
 
+	/**
+	 * List of groups user can enter
+	 */
 	private GroupListView groupListView;
 
+	/**
+	 * Button to create a new group
+	 */
 	private Button createButton;
 
+	/**
+	 * Source of style sheet
+	 */
 	String styleSheetSource;
 
 	public static void main(final String args[])
@@ -76,7 +110,7 @@ public class MainApplication extends Application{
 
 			@Override
 			public void handle(final WindowEvent event) {
-				System.out.println("Closing application.");
+				Logger.getInstance().write("Closing application.");
 				controller.close();
 			}
 		});
@@ -95,7 +129,7 @@ public class MainApplication extends Application{
 	private void displayError(final String error)
 	{
 
-		AlertDialog dialog = new AlertDialog(primaryStage,error,AlertDialog.ICON_ERROR);
+		AlertDialog dialog = new AlertDialog(primaryStage,error);
 		dialog.show();
 	}
 
@@ -104,7 +138,7 @@ public class MainApplication extends Application{
 		primaryStage.setResizable(true);
 		tabPane = new TabPane();
 		groupListView = new GroupListView(list);
-		createButton = new Button("Create Group");
+		createButton = new Button("+");
 		createButton.setOnMouseClicked(new EventHandler<MouseEvent>(){
 
 			@Override
@@ -136,6 +170,7 @@ public class MainApplication extends Application{
 				}
 				if(newTab != null)
 				{
+
 					newTab.setStyle("-fx-background-color:#AAECFF");
 				}
 			}
@@ -149,6 +184,17 @@ public class MainApplication extends Application{
 				if(click.getClickCount() == 2)
 				{
 					final GroupModel group = groupListView.getSelectionModel().getSelectedItem();
+
+					for(Tab tab : tabPane.getTabs())
+					{
+						ChatTab chatTab = (ChatTab)tab;
+
+						if(chatTab.getGroup().equals(group))
+						{
+							tabPane.getSelectionModel().select(tab);
+							return;
+						}
+					}
 					controller.joinGroup(group);
 				}
 			}
@@ -161,13 +207,48 @@ public class MainApplication extends Application{
 		primaryStage.setScene(mainScene);
 	}
 
+	private void lostConnection()
+	{
+		final AlertDialog dialog = new AlertDialog(primaryStage,"The connection to the server has been lost.");
+
+		dialog.setOnConfirmHandler(new EventHandler<ActionEvent>(){
+
+			@Override
+			public void handle(final ActionEvent event) {
+				primaryStage.close();
+				dialog.close();
+				Platform.exit();
+			}
+		});
+		dialog.show();
+	}
+
+
+
 	private void showCreateGroupBox()
 	{
 		final Stage dialog = new Stage();
 		dialog.initStyle(StageStyle.UTILITY);
+		dialog.setTitle("Create New Group");
 		final Label groupNameLabel = new Label("Group Name:");
 		final TextField groupName = new TextField();
 		final Button createButton = new Button("Create");
+
+		createButton.setOnAction(new EventHandler<ActionEvent>(){
+
+			@Override
+			public void handle(final ActionEvent arg0) {
+
+
+				if(groupName.getText().isEmpty())
+				{
+					displayError("Group Name cannot be empty");
+					return;
+				}
+				controller.createGroup(groupName.getText());
+				dialog.close();
+			}
+		});
 
 		groupName.setOnKeyPressed(new EventHandler<KeyEvent>() {
 			@Override
@@ -180,22 +261,7 @@ public class MainApplication extends Application{
 			}
 		});
 
-		createButton.setOnMouseClicked(new EventHandler<MouseEvent>(){
-
-			@Override
-			public void handle(final MouseEvent arg0) {
-				if(groupName.getText().isEmpty())
-				{
-					displayError("Group Name cannot be empty");
-					return;
-				}
-				controller.createGroup(groupName.getText());
-				dialog.close();
-			}
-		});
-
 		HBox box = new HBox();
-
 		box.getChildren().addAll(groupNameLabel,groupName,createButton);
 		box.setPadding(new Insets(5, 5, 5, 5));
 		Scene scene = new Scene(box);
@@ -208,6 +274,13 @@ public class MainApplication extends Application{
 
 	}
 
+	/**
+	 * Return the ChatTab associated with the given group
+	 * @param group Group to search for in chat tab
+	 * @return ChatTab if found, null otherwise
+	 * @precondition Group has ChatTab in list
+	 * @postcondition ChatTab returned
+	 */
 	private ChatTab findChatTabByGroup(final GroupModel group)
 	{
 		for(Tab tab : tabPane.getTabs()){
@@ -221,17 +294,29 @@ public class MainApplication extends Application{
 		return null;
 	}
 
+	/**
+	 * Add a message to a chat tab
+	 * @param message Message Model containing message, and group to add to
+	 * @precondition MessageModel is not null
+	 * @postcondition ChatTab associated with group in MessageModel will contain new message
+	 */
 	private void addMessage(final MessageModel message)
 	{
 		ChatTab tab = findChatTabByGroup(message.getGroup());
 
 		if(tab != null)
 		{
-			String line = message.getTimeSent().toString()+" "+message.getSendingUser().getUsername()+": "+message.getMessage()+"\n";
-			tab.addMessage(line);
+			tab.addMessage(message);
 		}
 	}
 
+	/**
+	 * Add a message to a chat tab
+	 * @param group Group to add message to
+	 * @param message Message to add to group
+	 * @precondition GroupModel is not null
+	 * @postcondition ChatTab associated with group will contain new message
+	 */
 	private void addMessage(final GroupModel group, final String message)
 	{
 		ChatTab tab = findChatTabByGroup(group);
@@ -242,6 +327,12 @@ public class MainApplication extends Application{
 		}
 	}
 
+	/**
+	 * Call to remove a group when it has been deleted
+	 * @param group Group to remove from the system
+	 * @precondition Group exists in the system already
+	 * @postcondition Group will be deleted from the system
+	 */
 	private void removeGroup(final GroupModel group)
 	{
 		ObservableList<Tab> tabs = tabPane.getTabs();
@@ -260,6 +351,12 @@ public class MainApplication extends Application{
 
 	}
 
+	/**
+	 * Call to add a recently created group
+	 * @param group Group to add
+	 * @precondition Group does not already exist
+	 * @postcondition Group will exist in system
+	 */
 	private void addGroup(final GroupModel group)
 	{
 		final ChatTab tab;
@@ -308,15 +405,34 @@ public class MainApplication extends Application{
 			public void handle(final ActionEvent event) {
 				String text = tab.getAndClearText();
 
-				if(!text.isEmpty())
+				if(!text.trim().isEmpty())
 				{
-					System.out.println("Sending message: "+text+", for group: "+tab.getGroup().getId());
+					Logger.getInstance().write("Sending message: "+text+", for group: "+tab.getGroup().getId());
 					controller.sendMessage(text,tab.getGroup());
 				}
 				else
 				{
 					displayError("Message cannot be empty.");
 				}
+			}
+		});
+
+		tab.setOnDragDrop(new EventHandler<DragEvent>() {
+			@Override
+			public void handle(final DragEvent event) {
+				Dragboard db = event.getDragboard();
+				boolean success = false;
+				if (db.hasFiles()) {
+					success = true;
+					for (File file:db.getFiles()) {
+						if(file.exists())
+						{
+							controller.sendFile(file, group);
+						}
+					}
+				}
+				event.setDropCompleted(success);
+				event.consume();
 			}
 		});
 
@@ -328,18 +444,34 @@ public class MainApplication extends Application{
 		});
 		groupsActive.add(group);
 	}
-	private class RequestListener implements IRequestListener
+
+	/**
+	 * Class used to run responses from server connection.
+	 * @author kyle
+	 *
+	 */
+	private class RequestListener implements IResponseListener
 	{
 		@Override
 		public void onConnection() {
-			System.out.println("Connection established");
-
+			Logger.getInstance().write("Connection established");
 			goToLogin();
 		}
 
 		@Override
+		public void onLostConnection()
+		{
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					lostConnection();
+				}
+			});
+		}
+
+		@Override
 		public void onLogin(final UserModel user) {
-			System.out.println("Succesful login");
+			Logger.getInstance().write("Succesful login");
 			controller.requestGroupList();
 		}
 
@@ -383,11 +515,11 @@ public class MainApplication extends Application{
 		}
 
 		@Override
-		public void onGroupListReceived(final List<GroupModel> groups) {
+		public void onGroupListReceived(final List<GroupModel> groupList) {
 			Platform.runLater(new Runnable(){
 				@Override
 				public void run() {
-					showMainView(groups);
+					showMainView(groupList);
 
 				}
 			});
@@ -431,7 +563,12 @@ public class MainApplication extends Application{
 
 		@Override
 		public void onUserJoinedGroup(final GroupModel group, final UserModel user) {
-			addMessage(group, user.getUsername()+" has entered the group.\n");
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					addMessage(group, user.getUsername()+" has entered the group.\n");
+				}
+			});
 		}
 
 		@Override
@@ -457,8 +594,44 @@ public class MainApplication extends Application{
 		}
 
 		@Override
-		public void onLostConnection()
-		{
+		public void onFileMessageReceived(final FileMessageResponse fileResponse) {
+
+			final String tempDir = "temp";
+
+			String name = fileResponse.getFileMessage().getFileName();
+
+			byte[] contents = fileResponse.getFileMessage().getContents();
+
+			final File file = new File(name);
+
+			try {
+				file.createNewFile();
+				FileOutputStream stream = new FileOutputStream(file);
+				stream.write(contents);
+				stream.close();
+
+				final ChatTab tab = findChatTabByGroup(fileResponse.getFileMessage().getGroup());
+
+				if(tab != null)
+				{
+					Platform.runLater(new Runnable(){
+						@Override
+						public void run() {
+							tab.addFileMessage(file,fileResponse.getFileMessage());
+						}
+					});
+
+				}
+
+			}catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+
 
 		}
 

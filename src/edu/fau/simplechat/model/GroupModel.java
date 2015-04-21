@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Model representing information for a chat group.
+ * Immutable Model representing information for a chat group.
  * @author kyle
  *
  */

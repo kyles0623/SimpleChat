@@ -17,7 +17,10 @@ import edu.fau.simplechat.response.ServerResponse;
 import edu.fau.simplechat.response.UserLeftGroupResponse;
 
 /**
- * TODO: UserConnection Description
+ * UserConnection contains the socket connection
+ * to a user over the network. All requests are
+ * received through the UserConnection class
+ * and responses are sent through the UserConnection class.
  * @author kyle
  *
  */
@@ -33,28 +36,47 @@ public class UserConnection implements Runnable {
 	 */
 	private final UUID id;
 
+	/**
+	 * InputStream to receive requests from user
+	 */
 	private ObjectInputStream inputStream;
 
+	/**
+	 * OutputStream to send responses to user
+	 */
 	private ObjectOutputStream outputStream;
 
+	/**
+	 * Boolean representing if connection is listening for requests
+	 */
 	private final AtomicBoolean running;
 
+	/**
+	 * Chat manager instance to handle requests
+	 */
 	private final ChatManager chatManager;
 
+	/**
+	 * Groups User is a member of
+	 */
 	private final ArrayList<ChatGroup> groups;
 
+	/**
+	 * User name of user
+	 */
 	private String username;
 
 	/**
-	 * TODO: Write Description
-	 * @param socket
+	 * Initialize the I/O connections to the user
+	 * @param socket Socket user is connected to
+	 * @param chatManager Instance of chat Manager
 	 */
-	public UserConnection(final Socket socket, final ChatManager cM)
+	public UserConnection(final Socket socket, final ChatManager chatManager)
 	{
 		this.socket = socket;
 		groups = new ArrayList<>();
 		id = UUID.randomUUID();
-		this.chatManager = cM;
+		this.chatManager = chatManager;
 
 		Logger.getInstance().write("Creating Output and Input Objects.");
 
@@ -73,6 +95,12 @@ public class UserConnection implements Runnable {
 		//TODO: Write Connected To Server Message
 	}
 
+	/**
+	 * Add a chat group to the user
+	 * @param group Group user is a member of
+	 * @precondition group is not null
+	 * @postcondition User will have a connection to the group
+	 */
 	public void addGroup(final ChatGroup group)
 	{
 		groups.add(group);
@@ -90,27 +118,53 @@ public class UserConnection implements Runnable {
 			}
 			else
 			{
+
 				running.set(false);
+				logout();
 			}
 		}
 	}
 
+	/**
+	 * Retrieve the USer ID of the user
+	 * @return User Id of the user
+	 * @precondition none
+	 * @postcondition none
+	 */
 	public UUID getUserId()
 	{
 		return id;
 	}
 
+	/**
+	 * Set the user name of the user
+	 * @param u username of the user
+	 * @precondition username is not taken already
+	 * @postcondition user will be associated with username
+	 */
 	public void setUsername(final String u)
 	{
 		Logger.getInstance().write("User "+u+" has Logged In.");
 		username = u;
 	}
 
+	/**
+	 * Retrieve the user model of the user
+	 * @return User Model rerpesenting user
+	 * @precondition none
+	 * @postcondition none
+	 */
 	public UserModel getUserModel()
 	{
 		return new UserModel(id,username);
 	}
 
+	/**
+	 * Handle a request received from the user
+	 * @param request Request to be handled
+	 * @precondition request is not null
+	 * @postcondition Request will be handled
+	 */
 	private void handleRequest(final ClientRequest request)
 	{
 		RequestHandler handler = RequestHandlerFactory.getInstance()
@@ -122,6 +176,12 @@ public class UserConnection implements Runnable {
 		}
 	}
 
+	/**
+	 * Send a response to the user
+	 * @param response Response to be sent
+	 * @precondition Connection is still active
+	 * @postcondition User will be receive response
+	 */
 	public void sendResponse(final ServerResponse response)
 	{
 		Logger.getInstance().write("Sending Response for:"+response.getClass().toString());
@@ -131,11 +191,15 @@ public class UserConnection implements Runnable {
 		}
 		catch (IOException e) {
 			Logger.getInstance().write("Error sending response to object: "+e.getMessage());
-
 		}
 	}
 
-	public void logout()
+	/**
+	 * Log the user out of the chat system
+	 * @precondition user is logged in chat system
+	 * @postcondition User will be disconnected from chat system
+	 */
+	public synchronized void logout()
 	{
 		String message;
 		if(username != null)
@@ -146,10 +210,17 @@ public class UserConnection implements Runnable {
 		{
 			message = "User id "+getUserId().toString()+" is logging out";
 		}
+
 		Logger.getInstance().write(message);
+
+		//Let all the goups know the user is gone
 		for(ChatGroup group : groups)
 		{
-			group.removeUser(this);
+
+			if(!group.removeUser(this))
+			{
+				Logger.getInstance().write("Error removing user "+username);
+			}
 			group.broadcast(new UserLeftGroupResponse(group.getGroupModel(),getUserModel()));
 
 		}
@@ -160,19 +231,26 @@ public class UserConnection implements Runnable {
 
 	}
 
+	/**
+	 * Listen for request from user
+	 * @return Request sent by user
+	 * @precondition connection is still active
+	 * @postcondition Request will be received fom user when they send it
+	 */
 	private ClientRequest retrieveRequest()
 	{
 		ClientRequest request = null;
 
 		try {
+			//waits for connection to send object
 			request = (ClientRequest)inputStream.readObject();
 			Logger.getInstance().write("Request received");
 		}
 		catch (ClassNotFoundException e) {
+			//Shouldn't be called.
 		}
 		catch (IOException e) {
 			Logger.getInstance().write("User disconnected.");
-			logout();
 		}
 
 		return request;
