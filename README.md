@@ -2,16 +2,12 @@
 
 This is a basic Chat system written in Java 7 with JavaFX library for FAU OOP class. 
 
-There is already a server instance running. 
-Use 52.10.227.178 as the host and 75 as the port.
+you can run the server locally with:
 
-Or, if you want to run locally, you can run it locally
-
-with java -jar RunServer.jar [port]
+java -jar RunServer.jar [port]
 
 
-
-To run the application, run the MainApplication.java file 
+To run the client application, run the MainApplication.java file 
 or run the client.jar file. A window will appear 
 telling you to type in a host and port. Use the host and port
 above or localhost and the port you set if running locally.
